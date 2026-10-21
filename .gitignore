@@ -1,0 +1,8 @@
+.env
+*.key
+target/
+app/build/
+app/.dart_tool/
+ios/Pods/
+node_modules/
+.DS_Store
