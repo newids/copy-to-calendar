@@ -38,6 +38,21 @@ fn all_day_date_parses() {
 }
 
 #[test]
+fn candidate_group_parses() {
+    let cases = parse_set(
+        r#"{"input": "이번 주 금요일 or 다음 주 화요일 중 편한 시간에", "expected": {"events": [{"start": "2026-10-23", "all_day": true, "candidate_group": 1}, {"start": "2026-10-27", "all_day": true, "candidate_group": 1}]}, "reference_date": "2026-10-19"}"#,
+    )
+    .unwrap();
+    let groups: Vec<_> = cases[0]
+        .expected
+        .events
+        .iter()
+        .map(|e| e.candidate_group)
+        .collect();
+    assert_eq!(groups, [Some(1), Some(1)]);
+}
+
+#[test]
 fn errors_report_line_numbers() {
     let content = concat!(
         r#"{"input": "x", "expected": {"no_event_found": true}, "reference_date": "2026-10-19"}"#,

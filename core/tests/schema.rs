@@ -26,9 +26,7 @@ const PRD_EXPLICIT: &str = r#"{
       "attendees": [],
       "recurrence": null,
       "notes": "원문 발췌",
-      "ambiguities": [
-        {"field": "start.date", "reason": "year_missing", "alternatives": ["2027-10-24"]}
-      ]
+      "ambiguities": []
     }
   ],
   "no_event_found": false
@@ -45,8 +43,49 @@ fn prd_explicit_example_parses() {
     assert_eq!(start.time, NaiveTime::from_hms_opt(10, 0, 0));
     assert!(event.start.relative.is_none());
     assert_eq!(event.location.as_deref(), Some("3층 강당"));
-    assert_eq!(event.ambiguities[0].reason, AmbiguityReason::YearMissing);
-    assert_eq!(event.ambiguities[0].alternatives, ["2027-10-24"]);
+    assert!(event.ambiguities.is_empty());
+    assert!(event.candidate_group.is_none());
+}
+
+#[test]
+fn prd_year_missing_example_is_relative() {
+    let field: DateTimeField = serde_json::from_value(json!({
+        "explicit": null,
+        "relative": {"month": 10, "day": 24, "time_word": "오전", "hour": 10},
+        "confidence": 0.95
+    }))
+    .unwrap();
+    assert!(field.explicit.is_none());
+    let rel = field.relative.unwrap();
+    assert_eq!(
+        (rel.month, rel.day, rel.hour),
+        (Some(10), Some(24), Some(10))
+    );
+    assert_eq!(rel.time_word, Some(TimeWord::Am));
+}
+
+#[test]
+fn prd_candidate_group_example_parses() {
+    let result: ExtractionResult = serde_json::from_value(json!({"events": [
+        {"title": null, "start": {"explicit": null, "relative": {"week_offset": 0, "weekday": 5}, "confidence": 0.6}, "candidate_group": 1},
+        {"title": null, "start": {"explicit": null, "relative": {"week_offset": 1, "weekday": 2}, "confidence": 0.6}, "candidate_group": 1}
+    ]}))
+    .unwrap();
+    let groups: Vec<_> = result.events.iter().map(|e| e.candidate_group).collect();
+    assert_eq!(groups, [Some(1), Some(1)]);
+}
+
+#[test]
+fn ambiguity_parses() {
+    let result: ExtractionResult = serde_json::from_value(json!({"events": [{
+        "title": "x",
+        "start": {"relative": {"month": 10, "day": 24}, "confidence": 0.95},
+        "ambiguities": [{"field": "start.date", "reason": "year_missing", "alternatives": ["2027-10-24"]}]
+    }]}))
+    .unwrap();
+    let ambiguity = &result.events[0].ambiguities[0];
+    assert_eq!(ambiguity.reason, AmbiguityReason::YearMissing);
+    assert_eq!(ambiguity.alternatives, ["2027-10-24"]);
 }
 
 #[test]

@@ -1,7 +1,7 @@
 //! LLM 추출 스키마 (PRD 5.1).
 //!
-//! 클라우드·로컬 공통 스키마 하나다. 모델은 날짜마다 `explicit`(원문에 절대 날짜가 있을 때)과
-//! `relative`(상대 표현일 때) 중 하나를 채우고, 날짜 확정은 항상 코드(PRD 5.3)가 한다.
+//! 클라우드·로컬 공통 스키마 하나다. 모델은 날짜마다 `explicit`(원문에 연도까지 적힌 절대 날짜가
+//! 있을 때)과 `relative`(그 밖의 모든 경우) 중 하나를 채우고, 날짜 확정은 항상 코드(PRD 5.3)가 한다.
 
 use chrono::{NaiveDate, NaiveTime, Weekday};
 use serde::{Deserialize, Serialize};
@@ -16,6 +16,9 @@ pub struct ExtractionResult {
 }
 
 /// 메시지에서 추출한 일정 1건. 한 메시지에 일정이 여러 개면 `events`에 여러 건이 온다 (PRD 4.1).
+///
+/// 날짜 후보가 여럿이면("이번 주 금 or 다음 주 화") 후보마다 이벤트를 따로 내고 같은
+/// `candidate_group`으로 묶는다. 카드는 모두 보여 주고 사용자가 등록할 것을 고른다 (PRD 5.1·5.4).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Event {
     /// 원문 언어 유지. 추출하지 못하면 null (PRD 5.2).
@@ -38,6 +41,9 @@ pub struct Event {
     pub notes: Option<String>,
     #[serde(default)]
     pub ambiguities: Vec<Ambiguity>,
+    /// 같은 값을 가진 이벤트들은 서로의 대안일 수 있는 후보다. 독립 일정이면 null.
+    #[serde(default)]
+    pub candidate_group: Option<u32>,
 }
 
 /// 시작·종료 시각 하나. `explicit`과 `relative`가 둘 다 있으면 코드가 둘을 계산해 비교하고,
@@ -52,7 +58,9 @@ pub struct DateTimeField {
     pub confidence: f64,
 }
 
-/// 원문에 있는 절대 날짜. ISO 8601 로컬 표기, 시간대는 코드가 사용자 설정값을 붙인다.
+/// 원문에 연도까지 적힌 절대 날짜. 연도가 없으면("10/24") 모델은 이 필드 대신
+/// `relative {month, day}`를 내고 연도는 코드가 정한다 (PRD 5.1·5.3).
+/// ISO 8601 로컬 표기, 시간대는 코드가 사용자 설정값을 붙인다.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ExplicitDateTime {
     pub date: NaiveDate,
@@ -78,7 +86,8 @@ pub struct ExplicitDateTime {
 /// | 저녁 7시 | `time_word: "저녁", hour: 7` |
 /// | 7시 (오전·오후 누락) | `hour: 7` |
 ///
-/// 주 시작은 월요일(ISO-8601)이다. 값의 해석 규칙은 PRD 5.3, 구현은 0-3 세션 몫이다.
+/// `week_offset`의 주 경계는 [`crate::context::WeekRules`]의 주 시작 요일(기본 월요일)을 따른다.
+/// `weekday` 번호는 주 시작 설정과 무관하게 ISO-8601이다. 해석 규칙은 PRD 5.3, 구현은 0-3 세션 몫이다.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RelativeExpr {
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -114,6 +123,8 @@ pub struct RelativeExpr {
 pub struct IsoWeekday(u8);
 
 impl IsoWeekday {
+    pub const MONDAY: Self = Self(1);
+
     pub fn number(self) -> u8 {
         self.0
     }
@@ -202,18 +213,20 @@ pub struct Ambiguity {
 }
 
 /// PRD 4.2의 모호성 종류 + PRD 5.1의 explicit·relative 불일치.
+///
+/// `year_missing`·`multiple_candidates`·`explicit_relative_mismatch`는 모델이 아니라 후처리 코드가 세운다.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum AmbiguityReason {
-    /// 연도 누락
+    /// 연도 누락. 코드가 정한 연도 외의 후보를 `alternatives`에 넣는다
     YearMissing,
     /// 오전/오후 불명
     AmPmUnknown,
     /// 기간 불명
     DurationUnknown,
-    /// 날짜 후보 복수
+    /// 날짜 후보 복수. 같은 `candidate_group`의 이벤트에 붙는다
     MultipleCandidates,
-    /// explicit과 relative를 각각 계산한 결과가 다름. 모델이 아니라 후처리 코드가 세운다
+    /// explicit과 relative를 각각 계산한 결과가 다름
     ExplicitRelativeMismatch,
 }
 

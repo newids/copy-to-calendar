@@ -15,6 +15,7 @@ ko-500.jsonl: {input, expected, reference_date, notes}. 주 1회 CI 회귀, 목�
 - `expected`는 후처리까지 끝난 **확정값**이다 (LLM 중간 표현 아님)
   - `events[]`: `title`·`end`·`location`·`recurrence`는 생략 가능(null), `all_day` 기본 false
   - `start`·`end`: 종일이면 `YYYY-MM-DD`, 아니면 로컬 `YYYY-MM-DDTHH:MM` (시간대 없음)
+  - 서로 대안인 후보("이번 주 금 or 다음 주 화")는 이벤트를 따로 적고 같은 `candidate_group` 번호를 준다
   - 일정이 없으면 `{"no_event_found": true}`
 - `reference_date`: 상대 표현을 해석할 기준일
 - 예시: `fixtures/prd-examples.jsonl` (PRD 3절 표 중 날짜가 확정된 3건)

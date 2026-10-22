@@ -3,6 +3,8 @@
 use chrono::{NaiveDateTime, NaiveTime};
 use serde::{Deserialize, Serialize};
 
+use crate::schema::IsoWeekday;
+
 /// 추출 요청 1건에 붙는 컨텍스트.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ParseContext {
@@ -14,6 +16,8 @@ pub struct ParseContext {
     pub working_hours: Option<WorkingHours>,
     #[serde(default)]
     pub defaults: TimeDefaults,
+    #[serde(default)]
+    pub week: WeekRules,
     /// 최근 등록한 장소, 최대 10개 (PRD 5.2).
     #[serde(default)]
     pub recent_locations: Vec<String>,
@@ -23,6 +27,24 @@ pub struct ParseContext {
 pub struct WorkingHours {
     pub start: NaiveTime,
     pub end: NaiveTime,
+}
+
+/// 주 경계 규칙. 설정에서 변경 가능 (PRD 5.3).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub struct WeekRules {
+    /// 주 시작 요일. "이번 주"·"담주"의 경계가 된다
+    pub start: IsoWeekday,
+    /// 기준일이 토·일일 때 "이번 주 금"을 다음 주로 넘긴다
+    pub weekend_rolls_to_next_week: bool,
+}
+
+impl Default for WeekRules {
+    fn default() -> Self {
+        Self {
+            start: IsoWeekday::MONDAY,
+            weekend_rolls_to_next_week: true,
+        }
+    }
 }
 
 /// 기본 시간값. 설정에서 변경 가능 (PRD 4.2).

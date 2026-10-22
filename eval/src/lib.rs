@@ -45,6 +45,9 @@ pub struct ExpectedEvent {
     /// RFC 5545 RRULE 문자열.
     #[serde(default)]
     pub recurrence: Option<String>,
+    /// 서로 대안인 후보 이벤트끼리 같은 번호 (PRD 5.1). 독립 일정이면 생략.
+    #[serde(default)]
+    pub candidate_group: Option<u32>,
 }
 
 /// 로컬 날짜(`2026-10-24`, 종일) 또는 로컬 일시(`2026-10-24T10:00`).
