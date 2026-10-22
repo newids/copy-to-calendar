@@ -162,14 +162,19 @@ impl From<Weekday> for IsoWeekday {
 /// 일정을 놓치는 것보다 미리 알리는 쪽이 낫다 (PRD 5.3).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum MonthPeriod {
+    /// 1일
     #[serde(rename = "월초")]
     Start,
+    /// 1~10일 → 1일
     #[serde(rename = "상순")]
     Early,
+    /// 11~20일 → 11일
     #[serde(rename = "중순")]
     Middle,
+    /// 21일~말일 → 21일
     #[serde(rename = "하순")]
     Late,
+    /// 하순과 같은 범위 → 21일
     #[serde(rename = "월말")]
     End,
 }
