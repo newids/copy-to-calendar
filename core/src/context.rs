@@ -3,7 +3,7 @@
 use chrono::{NaiveDateTime, NaiveTime};
 use serde::{Deserialize, Serialize};
 
-use crate::schema::IsoWeekday;
+use crate::schema::{IsoWeekday, TimeWord};
 
 /// 추출 요청 1건에 붙는 컨텍스트.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -47,26 +47,52 @@ impl Default for WeekRules {
     }
 }
 
-/// 기본 시간값. 설정에서 변경 가능 (PRD 4.2).
+/// 시간대 말만 있고 시각이 없을 때("내일 점심")의 기본 시각. 설정에서 변경 가능 (PRD 4.2).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TimeDefaults {
-    /// "점심"
-    pub lunch: NaiveTime,
-    /// "저녁"
-    pub evening: NaiveTime,
+    /// "새벽"
+    pub dawn: NaiveTime,
+    /// "아침"
+    pub morning: NaiveTime,
     /// "오전" 단독
     pub am: NaiveTime,
+    /// "점심"
+    pub lunch: NaiveTime,
+    /// "오후" 단독
+    pub pm: NaiveTime,
+    /// "저녁"
+    pub evening: NaiveTime,
+    /// "밤"
+    pub night: NaiveTime,
     /// 종료 시간이 없을 때 일정 길이
     pub duration_minutes: u32,
+}
+
+impl TimeDefaults {
+    pub fn time_for(&self, word: TimeWord) -> NaiveTime {
+        match word {
+            TimeWord::Dawn => self.dawn,
+            TimeWord::Morning => self.morning,
+            TimeWord::Am => self.am,
+            TimeWord::Lunch => self.lunch,
+            TimeWord::Pm => self.pm,
+            TimeWord::Evening => self.evening,
+            TimeWord::Night => self.night,
+        }
+    }
 }
 
 impl Default for TimeDefaults {
     fn default() -> Self {
         let hm = |h, m| NaiveTime::from_hms_opt(h, m, 0).expect("유효한 시각");
         Self {
-            lunch: hm(12, 0),
-            evening: hm(19, 0),
+            dawn: hm(5, 0),
+            morning: hm(8, 0),
             am: hm(10, 0),
+            lunch: hm(12, 0),
+            pm: hm(13, 0),
+            evening: hm(19, 0),
+            night: hm(19, 0),
             duration_minutes: 60,
         }
     }

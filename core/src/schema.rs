@@ -158,7 +158,8 @@ impl From<Weekday> for IsoWeekday {
     }
 }
 
-/// 월 안의 구간 표현 (PRD 5.2).
+/// 월 안의 구간 표현 (PRD 5.2). 후처리는 구간의 **가장 빠른 날짜 하나**로 확정한다 —
+/// 일정을 놓치는 것보다 미리 알리는 쪽이 낫다 (PRD 5.3).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum MonthPeriod {
     #[serde(rename = "월초")]
@@ -173,7 +174,8 @@ pub enum MonthPeriod {
     End,
 }
 
-/// 공휴일·명절 기준 표현 (PRD 5.3). 공휴일 테이블과 이름 목록은 후처리 단계에서 정한다.
+/// 공휴일·명절 기준 표현 (PRD 5.3). `name`은 한국천문연구원 특일 정보의 `dateName` 값을 쓰고,
+/// 날짜는 그 데이터로 만든 내장 공휴일 테이블에서 찾는다.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct HolidayRef {
     pub name: String,
@@ -182,7 +184,8 @@ pub struct HolidayRef {
     pub day_offset: i32,
 }
 
-/// 시간대를 가리키는 말. 기본 시각은 [`crate::context::TimeDefaults`]가 정한다 (PRD 4.2).
+/// 시간대를 가리키는 말. `hour` 없이 단독으로 쓰이면 [`crate::context::TimeDefaults`]의 기본 시각,
+/// `hour`와 함께 쓰이면 오전·오후 판정에 쓴다 (PRD 4.2).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum TimeWord {
     #[serde(rename = "새벽")]
