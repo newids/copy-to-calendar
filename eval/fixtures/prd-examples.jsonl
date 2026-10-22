@@ -1,0 +1,3 @@
+{"input": "담주 목욜 저녁 7시 강남역 2번출구 앞에서 봐요", "expected": {"events": [{"start": "2026-10-29T19:00", "end": "2026-10-29T20:00", "location": "강남역 2번 출구"}]}, "reference_date": "2026-10-19", "notes": "PRD 3절 예시"}
+{"input": "[공지] 10/24(토) 오전 10시 ~ 12시 학부모 설명회, 3층 강당", "expected": {"events": [{"title": "학부모 설명회", "start": "2026-10-24T10:00", "end": "2026-10-24T12:00", "location": "3층 강당"}]}, "reference_date": "2026-10-19", "notes": "PRD 3절 예시"}
+{"input": "내일 점심", "expected": {"events": [{"start": "2026-10-20T12:00", "end": "2026-10-20T13:00"}]}, "reference_date": "2026-10-19", "notes": "PRD 3절 예시. 점심 기본값 12:00, 길이 1시간"}

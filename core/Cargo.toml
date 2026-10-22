@@ -1,0 +1,15 @@
+[package]
+name = "c2c-core"
+description = "AI Copy To Calendar 공통 코어: 추출 스키마, 후처리, Provider 어댑터"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[dependencies]
+chrono.workspace = true
+serde.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true
