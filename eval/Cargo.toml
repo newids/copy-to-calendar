@@ -1,0 +1,13 @@
+[package]
+name = "eval"
+description = "한국어 일정 메시지 평가셋 형식과 파싱 회귀 실행기"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[dependencies]
+c2c-core.workspace = true
+chrono.workspace = true
+serde.workspace = true
+serde_json.workspace = true
