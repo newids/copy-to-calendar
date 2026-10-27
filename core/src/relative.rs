@@ -323,13 +323,9 @@ impl<'a> Resolver<'a> {
             12 => (12, None),
             // "1~6시 단독은 오후로 추정"
             1..=6 => (hour + 12, Some(hour)),
-            // 7~11시: 근무 시작 전 시각이면 오후, 아니면 오전. 근무시간을 모르면 오전.
+            // 7~11시: 근무 시작 전 시각이면 오후, 아니면 오전.
             _ => {
-                let starts_before_work = self
-                    .context
-                    .working_hours
-                    .is_some_and(|w| hour < w.start.hour());
-                if starts_before_work {
+                if hour < self.context.working_hours.start.hour() {
                     (hour + 12, Some(hour))
                 } else {
                     (hour, Some(hour + 12))

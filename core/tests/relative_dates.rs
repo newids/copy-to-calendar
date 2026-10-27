@@ -17,11 +17,11 @@ fn context(reference: &str) -> ParseContext {
     serde_json::from_value(json!({"reference": reference, "time_zone": "Asia/Seoul"})).unwrap()
 }
 
-fn working_hours(context: &mut ParseContext) {
-    context.working_hours = Some(WorkingHours {
-        start: NaiveTime::from_hms_opt(9, 0, 0).unwrap(),
-        end: NaiveTime::from_hms_opt(18, 0, 0).unwrap(),
-    });
+fn early_working_hours(context: &mut ParseContext) {
+    context.working_hours = WorkingHours {
+        start: NaiveTime::from_hms_opt(7, 0, 0).unwrap(),
+        end: NaiveTime::from_hms_opt(16, 0, 0).unwrap(),
+    };
 }
 
 fn relative(value: Value) -> DateTimeField {
@@ -590,13 +590,6 @@ fn hours_without_am_pm() {
                 &[(AmPmUnknown, "06:00")],
             ),
             (
-                "7시, 근무시간 모름 → 오전",
-                MONDAY,
-                json!({"hour": 7}),
-                "2026-10-19T07:00",
-                &[(AmPmUnknown, "19:00")],
-            ),
-            (
                 "12시 → 정오, 플래그 없음",
                 MONDAY,
                 json!({"hour": 12}),
@@ -604,13 +597,8 @@ fn hours_without_am_pm() {
                 &[],
             ),
             ("0시", MONDAY, json!({"hour": 0}), "2026-10-19T00:00", &[]),
-        ],
-        |_| {},
-    );
-    run(
-        vec![
             (
-                "7시, 근무 09시 시작 → 오후",
+                "7시, 기본 근무 09시 시작 전 → 오후",
                 MONDAY,
                 json!({"hour": 7}),
                 "2026-10-19T19:00",
@@ -631,7 +619,17 @@ fn hours_without_am_pm() {
                 &[(AmPmUnknown, "22:00")],
             ),
         ],
-        working_hours,
+        |_| {},
+    );
+    run(
+        vec![(
+            "7시, 근무 07시 시작으로 설정 → 오전",
+            MONDAY,
+            json!({"hour": 7}),
+            "2026-10-19T07:00",
+            &[(AmPmUnknown, "19:00")],
+        )],
+        early_working_hours,
     );
 }
 

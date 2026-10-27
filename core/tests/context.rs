@@ -1,4 +1,4 @@
-use c2c_core::context::{ParseContext, TimeDefaults, WeekRules};
+use c2c_core::context::{ParseContext, TimeDefaults, WeekRules, WorkingHours};
 use c2c_core::schema::{IsoWeekday, TimeWord};
 use chrono::{NaiveTime, Weekday};
 use serde_json::json;
@@ -8,6 +8,10 @@ fn defaults_follow_prd() {
     let week = WeekRules::default();
     assert_eq!(week.start.to_chrono(), Weekday::Mon);
     assert!(week.weekend_rolls_to_next_week);
+
+    let work = WorkingHours::default();
+    assert_eq!(work.start, NaiveTime::from_hms_opt(9, 0, 0).unwrap());
+    assert_eq!(work.end, NaiveTime::from_hms_opt(18, 0, 0).unwrap());
 
     let times = TimeDefaults::default();
     assert_eq!(times.lunch, NaiveTime::from_hms_opt(12, 0, 0).unwrap());
@@ -71,5 +75,6 @@ fn omitted_settings_use_defaults() {
     }))
     .unwrap();
     assert_eq!(context.week, WeekRules::default());
+    assert_eq!(context.working_hours, WorkingHours::default());
     assert_eq!(context.defaults, TimeDefaults::default());
 }

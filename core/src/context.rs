@@ -13,7 +13,7 @@ pub struct ParseContext {
     /// 사용자 시간대 (IANA 이름, 예: `Asia/Seoul`).
     pub time_zone: String,
     #[serde(default)]
-    pub working_hours: Option<WorkingHours>,
+    pub working_hours: WorkingHours,
     #[serde(default)]
     pub defaults: TimeDefaults,
     #[serde(default)]
@@ -23,10 +23,20 @@ pub struct ParseContext {
     pub recent_locations: Vec<String>,
 }
 
+/// 근무시간. 오전·오후 표시 없는 7~11시 추정에 쓴다 (PRD 5.3). 기본 09:00~18:00, 설정에서 변경 가능.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct WorkingHours {
     pub start: NaiveTime,
     pub end: NaiveTime,
+}
+
+impl Default for WorkingHours {
+    fn default() -> Self {
+        Self {
+            start: NaiveTime::from_hms_opt(9, 0, 0).expect("유효한 시각"),
+            end: NaiveTime::from_hms_opt(18, 0, 0).expect("유효한 시각"),
+        }
+    }
 }
 
 /// 주 경계 규칙. 설정에서 변경 가능 (PRD 5.3).
