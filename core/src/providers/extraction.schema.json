@@ -1,0 +1,102 @@
+{
+  "$defs": {
+    "nullable_int": {"anyOf": [{"type": "integer"}, {"type": "null"}]},
+    "date_time_field": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["explicit", "relative", "confidence"],
+      "properties": {
+        "explicit": {
+          "anyOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["date", "time"],
+              "properties": {
+                "date": {"type": "string", "format": "date"},
+                "time": {"anyOf": [{"type": "string"}, {"type": "null"}]}
+              }
+            },
+            {"type": "null"}
+          ]
+        },
+        "relative": {
+          "anyOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["day_offset", "week_offset", "weekday", "month_offset", "month", "day", "month_period", "holiday", "time_word", "hour", "minute"],
+              "properties": {
+                "day_offset": {"$ref": "#/$defs/nullable_int"},
+                "week_offset": {"$ref": "#/$defs/nullable_int"},
+                "weekday": {"anyOf": [{"type": "integer", "enum": [1, 2, 3, 4, 5, 6, 7]}, {"type": "null"}]},
+                "month_offset": {"$ref": "#/$defs/nullable_int"},
+                "month": {"$ref": "#/$defs/nullable_int"},
+                "day": {"$ref": "#/$defs/nullable_int"},
+                "month_period": {"anyOf": [{"type": "string", "enum": ["월초", "상순", "중순", "하순", "월말"]}, {"type": "null"}]},
+                "holiday": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["name", "day_offset", "whole_period"],
+                      "properties": {
+                        "name": {"type": "string"},
+                        "day_offset": {"type": "integer"},
+                        "whole_period": {"type": "boolean"}
+                      }
+                    },
+                    {"type": "null"}
+                  ]
+                },
+                "time_word": {"anyOf": [{"type": "string", "enum": ["새벽", "아침", "오전", "점심", "오후", "저녁", "밤"]}, {"type": "null"}]},
+                "hour": {"$ref": "#/$defs/nullable_int"},
+                "minute": {"$ref": "#/$defs/nullable_int"}
+              }
+            },
+            {"type": "null"}
+          ]
+        },
+        "confidence": {"type": "number"}
+      }
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["events", "no_event_found"],
+  "properties": {
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["title", "start", "end", "all_day", "location", "attendees", "recurrence", "notes", "ambiguities", "candidate_group"],
+        "properties": {
+          "title": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+          "start": {"$ref": "#/$defs/date_time_field"},
+          "end": {"anyOf": [{"$ref": "#/$defs/date_time_field"}, {"type": "null"}]},
+          "all_day": {"type": "boolean"},
+          "location": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+          "attendees": {"type": "array", "items": {"type": "string"}},
+          "recurrence": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+          "notes": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+          "ambiguities": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["field", "reason", "alternatives"],
+              "properties": {
+                "field": {"type": "string"},
+                "reason": {"type": "string", "enum": ["am_pm_unknown", "duration_unknown"]},
+                "alternatives": {"type": "array", "items": {"type": "string"}}
+              }
+            }
+          },
+          "candidate_group": {"$ref": "#/$defs/nullable_int"}
+        }
+      }
+    },
+    "no_event_found": {"type": "boolean"}
+  }
+}

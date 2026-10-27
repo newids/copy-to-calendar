@@ -142,3 +142,17 @@ fn assembly_failure_is_wrong() {
         json!({"events": [{"title": null, "start": rel(json!({"holiday": {"name": "없는날"}}))}]});
     assert!(score(expected, output).unwrap_err().contains("없는날"));
 }
+
+#[test]
+fn record_lines_round_trip() {
+    use c2c_core::providers::LlmError;
+    use eval::record::{from_line, to_line};
+
+    let output: ExtractionResult = serde_json::from_value(json!({"no_event_found": true})).unwrap();
+    assert_eq!(from_line(&to_line(&Ok(output.clone()))), Ok(output));
+
+    let failed = to_line(&Err(LlmError::Timeout));
+    // 실패 기록은 빈 결과로 읽히면 안 된다 ("일정 없음" 케이스를 맞힌 것으로 셀 수 있다)
+    assert_eq!(from_line(&failed), Err("추출 실패: 시간 초과".to_string()));
+    assert!(from_line("not json").is_err());
+}
