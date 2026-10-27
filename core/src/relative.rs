@@ -306,8 +306,12 @@ impl<'a> Resolver<'a> {
             _ if hour == 0 || hour >= 13 => (hour, false),
             Some(word) => word_hour(word, hour),
             None => {
-                if let Some(h) = after.and_then(|a| following_hour(hour, minute, a)) {
-                    (h, false)
+                if let Some(after) = after {
+                    // 종료 시각: 시작 이후 가장 가까운 시각. 그날 안에 없으면 다음 날 ("밤 11시~1시")
+                    match following_hour(hour, minute, after) {
+                        Some(h) => (h, false),
+                        None => (hour % 12, true),
+                    }
                 } else {
                     let (h, alternative) = self.guess_am_pm(hour);
                     if let Some(alt) = alternative {

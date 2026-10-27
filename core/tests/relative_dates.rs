@@ -665,6 +665,11 @@ fn end_follows_start() {
             json!({"day_offset": 2, "hour": 18}),
             "2026-10-21T18:00",
         ),
+        (
+            json!({"day_offset": 1, "time_word": "밤", "hour": 11}),
+            json!({"hour": 1}),
+            "2026-10-21T01:00",
+        ),
     ];
     for (start, end, expected) in cases {
         let s = resolver.resolve(&relative(start), "start").unwrap();
