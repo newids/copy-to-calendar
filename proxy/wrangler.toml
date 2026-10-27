@@ -1,0 +1,10 @@
+# Cloudflare Workers 배포 설정. 배포: npx wrangler@4.149.0 deploy
+# 비밀값은 wrangler secret put ANTHROPIC_API_KEY 로 넣는다 (커밋하지 않는다).
+name = "c2c-proxy"
+main = "src/index.ts"
+compatibility_date = "2026-10-01"
+
+[vars]
+MODEL = "claude-haiku-5-5"
+# [__] 잠정값. 기기당 분당 요청 수. 확정 필요 (ADR 0004)
+RATE_LIMIT_PER_MINUTE = "20"
