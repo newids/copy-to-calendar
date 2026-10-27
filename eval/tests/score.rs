@@ -82,6 +82,60 @@ fn candidate_groups_compare_by_membership() {
 }
 
 #[test]
+fn order_does_not_matter() {
+    let expected = case(json!({"events": [
+        {"start": "2026-10-20T12:00"},
+        {"start": "2026-10-21", "all_day": true}
+    ]}));
+    let reversed = json!({"events": [
+        {"title": null, "start": rel(json!({"day_offset": 2}))},
+        {"title": null, "start": rel(json!({"day_offset": 1, "time_word": "점심"}))}
+    ]});
+    assert_eq!(score(expected.clone(), reversed), Ok(()));
+
+    let wrong = json!({"events": [
+        {"title": null, "start": rel(json!({"day_offset": 2}))},
+        {"title": null, "start": rel(json!({"day_offset": 1, "time_word": "저녁"}))}
+    ]});
+    let err = score(expected, wrong).unwrap_err();
+    assert!(err.contains("기대 #0 (시작 2026-10-20T12:00)"), "{err}");
+}
+
+#[test]
+fn title_and_location_are_not_scored() {
+    let expected = case(
+        json!({"events": [{"title": "학부모 설명회", "location": "3층 강당", "start": "2026-10-20", "all_day": true}]}),
+    );
+    let output = json!({"events": [{"title": "설명회", "location": "강당", "start": rel(json!({"day_offset": 1}))}]});
+    assert_eq!(score(expected, output), Ok(()));
+}
+
+#[test]
+fn groups_are_matched_after_reordering() {
+    let expected = case(json!({"events": [
+        {"start": "2026-10-23", "all_day": true, "candidate_group": 1},
+        {"start": "2026-10-20", "all_day": true},
+        {"start": "2026-10-27", "all_day": true, "candidate_group": 1}
+    ]}));
+    let output = json!({"events": [
+        {"title": null, "start": rel(json!({"week_offset": 1, "weekday": 2})), "candidate_group": 5},
+        {"title": null, "start": rel(json!({"week_offset": 0, "weekday": 5})), "candidate_group": 5},
+        {"title": null, "start": rel(json!({"day_offset": 1}))}
+    ]});
+    assert_eq!(score(expected.clone(), output), Ok(()));
+
+    let split = json!({"events": [
+        {"title": null, "start": rel(json!({"week_offset": 1, "weekday": 2})), "candidate_group": 5},
+        {"title": null, "start": rel(json!({"week_offset": 0, "weekday": 5})), "candidate_group": 6},
+        {"title": null, "start": rel(json!({"day_offset": 1}))}
+    ]});
+    assert_eq!(
+        score(expected, split),
+        Err("후보 묶음이 기대와 다름".to_string())
+    );
+}
+
+#[test]
 fn assembly_failure_is_wrong() {
     let expected = case(json!({"events": [{"start": "2026-10-20"}]}));
     let output =

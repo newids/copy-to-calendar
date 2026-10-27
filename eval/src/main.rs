@@ -3,11 +3,12 @@
 //! ```text
 //! cargo run -p eval -- --set eval/ko-500.jsonl                                  # 형식 검증만
 //! cargo run -p eval -- --set <set.jsonl> --outputs <outputs.jsonl> [--min-accuracy 0.95]
-//! cargo run -p eval -- --set eval/ko-500.jsonl --provider <name>                # 0-6 이후
+//! cargo run -p eval -- --set eval/ko-500.jsonl --provider <name>                # 0-6 이후: 출력 기록
 //! ```
 //!
 //! `--outputs`는 케이스와 같은 줄 순서로 모델 출력(PRD 5.1 JSON)을 담은 JSONL이다. 출력을 core로 조립해
 //! `expected`와 비교한다. `--min-accuracy`보다 낮으면 실패로 끝난다 (CLAUDE.md 규칙 7).
+//! 모델 출력은 기록해서 고정하고, 채점은 항상 기록된 출력으로 한다 (ADR 0003).
 
 use std::path::PathBuf;
 use std::process::ExitCode;

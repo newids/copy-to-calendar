@@ -25,12 +25,15 @@ ko-500.jsonl: {input, expected, reference_date, notes}. 주 1회 CI 회귀, 목�
 ```
 cargo run -p eval -- --set eval/ko-500.jsonl                   # 형식 검증 (CI)
 cargo run -p eval -- --set <set.jsonl> --outputs <outputs.jsonl> --min-accuracy 0.95
-cargo run -p eval -- --set eval/ko-500.jsonl --provider <name>  # 0-6 이후
+cargo run -p eval -- --set eval/ko-500.jsonl --provider <name>  # 0-6 이후: 모델 출력 기록용
 ```
 
 - `--outputs`: 케이스와 같은 줄 순서로 모델 출력(PRD 5.1 JSON)을 담은 JSONL
   - core로 조립(ADR 0003)한 결과를 `expected`와 비교해 정확도를 낸다
   - `--min-accuracy`보다 낮으면 실패로 끝난다
-- 채점: 일정 수, 각 일정의 시작·종료(`expected`에 있을 때)·종일 여부·후보 묶음이 모두 맞아야 정답이다. 제목·장소는 아직 채점하지 않는다
+- 채점: 일정 수, 각 일정의 시작·종료(`expected`에 있을 때)·종일 여부·후보 묶음이 모두 맞아야 정답이다
+  - 일정 순서는 보지 않는다
+  - 제목·장소는 채점하지 않는다
+- 모델 출력은 기록해서 고정한다. 채점은 항상 기록된 출력 파일로 하고, `--provider`는 출력을 새로 기록할 때만 쓴다 (ADR 0003)
 - CI는 `fixtures/prd-examples.jsonl`과 `fixtures/prd-examples.outputs.jsonl`을 정확도 100%로 돌린다
   - 출력 fixture는 사람이 쓴 것이고, 실제 모델 출력이 아니다
