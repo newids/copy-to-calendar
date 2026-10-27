@@ -37,6 +37,19 @@ impl HolidayTable {
         self.entries.is_empty()
     }
 
+    /// 테이블에 있는 공휴일 이름 (중복 없이, 가나다순). 대체공휴일은 뺀다 — 메시지에서 이름으로 부르지 않는다.
+    pub fn names(&self) -> Vec<&str> {
+        let mut names: Vec<&str> = self
+            .entries
+            .iter()
+            .map(|h| h.name.as_str())
+            .filter(|n| !n.starts_with("대체공휴일"))
+            .collect();
+        names.sort_unstable();
+        names.dedup();
+        names
+    }
+
     /// `name`이 이어지는 날짜 묶음(연휴) 중 `from` 이후에 끝나는 첫 묶음의 (첫날, 마지막 날).
     /// 특일 정보 API는 설날·추석 연휴 3일을 모두 같은 이름으로 준다.
     pub fn block(&self, name: &str, from: NaiveDate) -> Option<(NaiveDate, NaiveDate)> {

@@ -41,7 +41,9 @@
 
 ```
 cargo test -p c2c-core          # core 단위 테스트
-cargo run -p eval -- --set eval/ko-500.jsonl --provider <name>   # 파싱 회귀
+cargo run -p eval -- --set <set> --outputs <기록된 출력> --min-accuracy 0.95   # 파싱 회귀
+cargo run -p eval -- --set <set> --provider <openai-compat|ollama|cloud> --base-url <url> --model <m> --record <출력>   # 모델 출력 기록
+cd proxy && npm ci && npm test && npm run typecheck   # 파싱 프록시
 cd app && flutter test               # Flutter 테스트
 cd app && flutter build macos|windows|ios|apk
 ```

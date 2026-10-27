@@ -1,7 +1,19 @@
-//! 교체 가능한 외부 연동 어댑터 인터페이스 (PRD 5.5·5.6·7절).
+//! 교체 가능한 외부 연동 어댑터 (PRD 5.5·5.6·7절).
 //!
-//! 구현체는 이 크레이트에 두지 않는다. LLM 어댑터 3종(`CloudProvider`, `OpenAiCompatProvider`,
-//! `OllamaProvider`)은 0-6 세션, 캘린더 어댑터(Google, EventKit)는 2·3단계에서 추가한다.
+//! LLM 어댑터 3종은 모두 같은 프롬프트([`prompt`])와 출력 스키마를 쓴다. 캘린더 어댑터(Google, EventKit)는
+//! 2·3단계에서 추가한다. 규칙은 ADR 0004.
+
+mod http;
+
+pub mod cloud;
+pub mod ollama;
+pub mod openai_compat;
+pub mod prompt;
+
+pub use cloud::CloudProvider;
+pub use http::parse_output;
+pub use ollama::OllamaProvider;
+pub use openai_compat::OpenAiCompatProvider;
 
 use chrono::{DateTime, FixedOffset};
 use thiserror::Error;
@@ -19,6 +31,19 @@ pub trait LlmProvider: Send + Sync {
     fn name(&self) -> &str;
 
     fn extract(&self, text: &str, context: &ParseContext) -> Result<ExtractionResult, LlmError>;
+}
+
+/// 출력이 스키마와 맞지 않으면 1회 다시 요청한다 (PRD 5.1·5.6). 그래도 실패하면 오류를 돌려주고,
+/// 호출하는 쪽이 수동 입력 또는 규칙 기반 폴백으로 넘어간다.
+pub fn extract_with_retry(
+    provider: &dyn LlmProvider,
+    text: &str,
+    context: &ParseContext,
+) -> Result<ExtractionResult, LlmError> {
+    match provider.extract(text, context) {
+        Err(LlmError::InvalidOutput(_)) => provider.extract(text, context),
+        other => other,
+    }
 }
 
 /// 오류 메시지에 사용자 메시지 본문을 넣지 않는다 (PRD 9절).
