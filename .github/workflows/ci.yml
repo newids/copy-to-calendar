@@ -26,3 +26,5 @@ jobs:
         run: cargo test --workspace --locked
       - name: eval set format
         run: cargo run -p eval --locked -- --set eval/ko-500.jsonl
+      - name: eval PRD examples (recorded outputs)
+        run: cargo run -p eval --locked -- --set eval/fixtures/prd-examples.jsonl --outputs eval/fixtures/prd-examples.outputs.jsonl --min-accuracy 1.0

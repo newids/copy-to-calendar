@@ -665,6 +665,11 @@ fn end_follows_start() {
             json!({"day_offset": 2, "hour": 18}),
             "2026-10-21T18:00",
         ),
+        (
+            json!({"day_offset": 1, "time_word": "밤", "hour": 11}),
+            json!({"hour": 1}),
+            "2026-10-21T01:00",
+        ),
     ];
     for (start, end, expected) in cases {
         let s = resolver.resolve(&relative(start), "start").unwrap();
@@ -749,14 +754,20 @@ fn holidays_resolve_from_table() {
     };
 
     let holiday = |offset: i32| json!({"holiday": {"name": "가상연휴", "day_offset": offset}});
-    assert_eq!(resolve_holiday(MONDAY, holiday(0)).unwrap(), "2026-10-27");
-    assert_eq!(resolve_holiday(MONDAY, holiday(-1)).unwrap(), "2026-10-26");
-    // 연휴 중이면 그 연휴의 첫날
+    let whole = json!({"holiday": {"name": "가상연휴", "whole_period": true}});
+    // 3일 연휴의 당일은 가운데 날
+    assert_eq!(resolve_holiday(MONDAY, holiday(0)).unwrap(), "2026-10-28");
+    assert_eq!(resolve_holiday(MONDAY, holiday(-1)).unwrap(), "2026-10-27");
     assert_eq!(
-        resolve_holiday("2026-10-28", holiday(0)).unwrap(),
+        resolve_holiday(MONDAY, whole.clone()).unwrap(),
         "2026-10-27"
     );
-    // 지난 연휴는 건너뛴다
+    // 연휴 중이어도 그 연휴를 가리킨다
+    assert_eq!(
+        resolve_holiday("2026-10-28", holiday(0)).unwrap(),
+        "2026-10-28"
+    );
+    // 지난 연휴는 건너뛴다. 2일 연휴의 당일은 첫날
     assert_eq!(
         resolve_holiday("2026-10-30", holiday(0)).unwrap(),
         "2027-10-15"
@@ -768,9 +779,49 @@ fn holidays_resolve_from_table() {
 }
 
 #[test]
-fn bundled_holiday_table_loads() {
-    // 갱신 스크립트를 돌리기 전에는 비어 있다 (ADR 0002).
-    let _ = HolidayTable::bundled();
+fn bundled_holidays() {
+    // core/data/holidays.json (한국천문연구원 특일 정보, 2026·2027년)
+    let table = HolidayTable::bundled();
+    let resolve_holiday = |reference: &str, value: Value| {
+        let ctx = context(reference);
+        Resolver::new(&ctx, &table)
+            .resolve(&relative(value), "start")
+            .map(|r| show(&r))
+            .unwrap()
+    };
+    let new_year = "2026-01-10";
+    let cases = [
+        (new_year, json!({"holiday": {"name": "설날"}}), "2026-02-17"),
+        (
+            new_year,
+            json!({"holiday": {"name": "설날", "day_offset": -1}}),
+            "2026-02-16",
+        ),
+        (
+            new_year,
+            json!({"holiday": {"name": "설날", "day_offset": 1}}),
+            "2026-02-18",
+        ),
+        (new_year, json!({"holiday": {"name": "추석"}}), "2026-09-25"),
+        (
+            new_year,
+            json!({"holiday": {"name": "추석", "whole_period": true}}),
+            "2026-09-24",
+        ),
+        (MONDAY, json!({"holiday": {"name": "설날"}}), "2027-02-07"),
+        (
+            MONDAY,
+            json!({"holiday": {"name": "추석", "whole_period": true}}),
+            "2027-09-14",
+        ),
+    ];
+    for (reference, value, expected) in cases {
+        assert_eq!(
+            resolve_holiday(reference, value.clone()),
+            expected,
+            "{value}"
+        );
+    }
 }
 
 #[test]

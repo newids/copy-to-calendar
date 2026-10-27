@@ -37,25 +37,19 @@ impl HolidayTable {
         self.entries.is_empty()
     }
 
-    /// `name`이 이어지는 날짜 묶음(연휴) 중 `from` 이후에 끝나는 첫 묶음의 첫날.
-    pub fn block_start(&self, name: &str, from: NaiveDate) -> Option<NaiveDate> {
-        let mut start: Option<NaiveDate> = None;
-        let mut prev: Option<NaiveDate> = None;
+    /// `name`이 이어지는 날짜 묶음(연휴) 중 `from` 이후에 끝나는 첫 묶음의 (첫날, 마지막 날).
+    /// 특일 정보 API는 설날·추석 연휴 3일을 모두 같은 이름으로 준다.
+    pub fn block(&self, name: &str, from: NaiveDate) -> Option<(NaiveDate, NaiveDate)> {
+        let mut block: Option<(NaiveDate, NaiveDate)> = None;
         for h in self.entries.iter().filter(|h| h.name == name) {
-            let continues = prev.and_then(|p| p.checked_add_days(Days::new(1))) == Some(h.date);
-            if !continues {
-                if let (Some(s), Some(p)) = (start, prev) {
-                    if p >= from {
-                        return Some(s);
-                    }
+            match block {
+                Some((start, end)) if end.checked_add_days(Days::new(1)) == Some(h.date) => {
+                    block = Some((start, h.date));
                 }
-                start = Some(h.date);
+                Some((_, end)) if end >= from => return block,
+                _ => block = Some((h.date, h.date)),
             }
-            prev = Some(h.date);
         }
-        match (start, prev) {
-            (Some(s), Some(p)) if p >= from => Some(s),
-            _ => None,
-        }
+        block.filter(|(_, end)| *end >= from)
     }
 }

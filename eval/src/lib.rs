@@ -3,6 +3,8 @@
 //! 한 줄이 한 케이스: `{input, expected, reference_date, notes}`.
 //! `expected`는 LLM 중간 표현이 아니라 후처리까지 끝난 확정값이다 — 정확도는 최종 날짜·시간으로 잰다.
 
+pub mod score;
+
 use std::fmt;
 use std::path::Path;
 

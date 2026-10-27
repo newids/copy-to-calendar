@@ -82,7 +82,7 @@ pub struct ExplicitDateTime {
 /// | 24일 (월 누락) | `day: 24` |
 /// | 10/24 (연도 누락) | `month: 10, day: 24` |
 /// | 다음 달 초 / 이번 달 하순 | `month_offset: 1, month_period: "월초"` / `month_offset: 0, month_period: "하순"` |
-/// | 추석 연휴 / 설 전날 | `holiday: {name: "추석"}` / `holiday: {name: "설날", day_offset: -1}` |
+/// | 추석 / 추석 연휴 / 설 전날 | `holiday: {name: "추석"}` / `holiday: {name: "추석", whole_period: true}` / `holiday: {name: "설날", day_offset: -1}` |
 /// | 저녁 7시 | `time_word: "저녁", hour: 7` |
 /// | 7시 (오전·오후 누락) | `hour: 7` |
 ///
@@ -184,9 +184,12 @@ pub enum MonthPeriod {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct HolidayRef {
     pub name: String,
-    /// 공휴일 당일 기준 일수. "설 전날"은 -1.
+    /// 공휴일 당일 기준 일수. "설 전날"은 -1. 여러 날 연휴면 가운데 날이 당일이다.
     #[serde(default)]
     pub day_offset: i32,
+    /// "추석 연휴"처럼 연휴 전체를 가리키면 true. 연휴 첫날로 확정한다.
+    #[serde(default)]
+    pub whole_period: bool,
 }
 
 /// 시간대를 가리키는 말. `hour` 없이 단독으로 쓰이면 [`crate::context::TimeDefaults`]의 기본 시각,
